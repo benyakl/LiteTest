@@ -4,10 +4,10 @@ on: push
 
 env:
   AWS_REGION: ap-southeast-2
-  ECR_REPOSITORY: lite-dev-ecr
-  ECS_CLUSTER: iNZight-dev-ecs-cluster
-  ECS_SERVICE: lite-dev
-  CONTAINER_NAME: lite-dev-ecr
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
 
 permissions:
   id-token: write
