@@ -1,0 +1,62 @@
+name: "Publish Docker image to AWS ECR and deploy to ECS"
+
+on: push
+
+env:
+  AWS_REGION: ap-southeast-2
+  ECR_REPOSITORY: lite-dev-ecr
+  ECS_CLUSTER: iNZight-dev-ecs-cluster
+  ECS_SERVICE: lite-dev
+  CONTAINER_NAME: lite-dev-ecr
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::868136143489:role/GitHubAssumeRole
+          role-session-name: GitHub-to-AWS
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set env TAGNAME
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/master" ]]; then
+            echo "TAGNAME=latest" >> $GITHUB_ENV
+          else
+            TAG=${GITHUB_REF#refs/heads/}
+            TAG=${TAG//\//_}
+            echo "TAGNAME=$TAG" >> $GITHUB_ENV
+          fi
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image to ECR
+        run: |
+          ECR_URI=$(aws ecr describe-repositories \
+            --repository-names ${{ env.ECR_REPOSITORY }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'repositories[0].repositoryUri' \
+            --output text)
+
+          docker build -t $ECR_URI:${{ env.TAGNAME }} .
+          docker push $ECR_URI:${{ env.TAGNAME }}
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
