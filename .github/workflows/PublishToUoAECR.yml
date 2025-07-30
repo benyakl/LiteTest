@@ -28,14 +28,14 @@ jobs:
           role-session-name: GitHub-to-AWS
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Set env TAGNAME
+      - name: Set image tag from branch name
         run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/master" ]]; then
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          if [[ "$BRANCH_NAME" == "master" ]]; then
             echo "TAGNAME=latest" >> $GITHUB_ENV
           else
-            TAG=${GITHUB_REF#refs/heads/}
-            TAG=${TAG//\//_}
-            echo "TAGNAME=$TAG" >> $GITHUB_ENV
+            CLEAN_TAG=${BRANCH_NAME//\//_}
+            echo "TAGNAME=$CLEAN_TAG" >> $GITHUB_ENV
           fi
 
       - name: Login to Amazon ECR
@@ -50,6 +50,7 @@ jobs:
             --query 'repositories[0].repositoryUri' \
             --output text)
 
+          echo "Using tag: ${{ env.TAGNAME }}"
           docker build -t $ECR_URI:${{ env.TAGNAME }} .
           docker push $ECR_URI:${{ env.TAGNAME }}
 
