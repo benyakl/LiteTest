@@ -138,3 +138,5 @@ the following are implemented.
   Comma seperated list with predictor variables.
 - confound:
   Comma seperated list for confounding variables.
+
+  Ben test workflow for AWS ECR
