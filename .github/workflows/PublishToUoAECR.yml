@@ -50,7 +50,7 @@ jobs:
             --query 'repositories[0].repositoryUri' \
             --output text)
 
-          echo "Using tag: ${{ env.TAGNAME }}"
+          echo "Using ECR URI: $ECR_URI"
           docker build -t $ECR_URI:${{ env.TAGNAME }} .
           docker push $ECR_URI:${{ env.TAGNAME }}
 
