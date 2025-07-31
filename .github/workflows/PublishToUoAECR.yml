@@ -52,7 +52,7 @@ jobs:
 
           echo "Using ECR URI: $ECR_URI"
           echo "Using tag: $TAGNAME"
-          docker build --no-cache -t ${{ env.ECR_REPOSITORY }} .
+          docker build --no-cache -t ${{ env.ECR_REPOSITORY }}:$TAGNAME .
           docker tag ${{ env.ECR_REPOSITORY }}:$TAGNAME $ECR_URI:$TAGNAME
           docker push $ECR_URI:$TAGNAME
 
