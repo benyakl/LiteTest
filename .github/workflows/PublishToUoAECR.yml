@@ -56,6 +56,13 @@ jobs:
           docker tag ${{ env.ECR_REPOSITORY }}:$TAGNAME $ECR_URI:$TAGNAME
           docker push $ECR_URI:$TAGNAME
 
+      - name: Clean up old image with tag '-'
+        run: |
+          aws ecr batch-delete-image \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --image-ids imageTag=- \
+            --region ${{ env.AWS_REGION }} || echo "Image with tag '-' not found or already deleted"
+
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
