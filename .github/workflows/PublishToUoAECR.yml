@@ -64,9 +64,23 @@ jobs:
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
             
-      - name: Clean up old image with tag '-'
+      - name: Delete all untagged images from ECR
         run: |
-          aws ecr batch-delete-image \
+          UNTAGGED_DIGESTS=$(aws ecr list-images \
             --repository-name ${{ env.ECR_REPOSITORY }} \
-            --image-ids imageTag=- \
-            --region ${{ env.AWS_REGION }} || echo "Image with tag '-' not found or already deleted"
+            --region ${{ env.AWS_REGION }} \
+            --filter tagStatus=UNTAGGED \
+            --query 'imageIds[*].imageDigest' \
+            --output text)
+      
+          if [ -z "$UNTAGGED_DIGESTS" ]; then
+            echo "No untagged images to delete."
+          else
+            for digest in $UNTAGGED_DIGESTS; do
+              echo "Deleting untagged image with digest: $digest"
+              aws ecr batch-delete-image \
+                --repository-name ${{ env.ECR_REPOSITORY }} \
+                --region ${{ env.AWS_REGION }} \
+                --image-ids imageDigest=$digest
+            done
+          fi
